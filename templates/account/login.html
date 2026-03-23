@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MockAI – Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              display: ["Syne", "sans-serif"],
+              body: ["DM Sans", "sans-serif"],
+            },
+            animation: {
+              float: "float 10s ease-in-out infinite",
+              pulseGlow: "pulseGlow 4s ease-in-out infinite",
+              fadeUp: "fadeUp 0.8s ease forwards",
+            },
+            keyframes: {
+              float: {
+                "0%,100%": { transform: "translateY(0px)" },
+                "50%": { transform: "translateY(-25px)" },
+              },
+              pulseGlow: {
+                "0%,100%": { boxShadow: "0 0 15px rgba(99,102,241,0.3)" },
+                "50%": { boxShadow: "0 0 40px rgba(139,92,246,0.6)" },
+              },
+              fadeUp: {
+                "0%": { opacity: 0, transform: "translateY(30px)" },
+                "100%": { opacity: 1, transform: "translateY(0)" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      body {
+        font-family: "DM Sans", sans-serif;
+        background: radial-gradient(circle at top left, #1e1b4b, #020617);
+      }
+
+      .glass {
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .input {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #e2e8f0;
+        transition: all 0.3s ease;
+      }
+      .input::placeholder {
+        color: rgba(148, 163, 184, 0.55);
+      }
+      .input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+        outline: none;
+      }
+
+      .gradient-text {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa, #c084fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* ─────────────────────────────────────────
+         ANIMATED BACK BUTTON
+      ───────────────────────────────────────── */
+      @keyframes slideInLeft {
+        0% {
+          opacity: 0;
+          transform: translateX(-22px);
+        }
+        60% {
+          opacity: 1;
+          transform: translateX(4px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .back-btn {
+        animation: slideInLeft 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        text-decoration: none;
+      }
+
+      /* pill shell */
+      .back-btn .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px 8px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(16px);
+        transition:
+          background 0.3s ease,
+          border-color 0.3s ease,
+          box-shadow 0.3s ease,
+          transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .back-btn:hover .pill {
+        background: rgba(139, 92, 246, 0.12);
+        border-color: rgba(139, 92, 246, 0.55);
+        box-shadow:
+          0 0 20px rgba(139, 92, 246, 0.2),
+          0 4px 16px rgba(0, 0, 0, 0.3);
+        transform: translateY(-1px);
+      }
+      .back-btn:active .pill {
+        transform: translateY(1px) scale(0.97);
+      }
+
+      /* icon circle */
+      .back-btn .icon-wrap {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: rgba(139, 92, 246, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition:
+          background 0.3s ease,
+          transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .back-btn:hover .icon-wrap {
+        background: rgba(139, 92, 246, 0.35);
+        transform: translateX(-3px);
+      }
+
+      /* arrow svg */
+      .back-btn .arrow {
+        width: 14px;
+        height: 14px;
+        color: #a78bfa;
+        transition: color 0.25s ease;
+      }
+      .back-btn:hover .arrow {
+        color: #c4b5fd;
+      }
+
+      /* label */
+      .back-btn .lbl {
+        font-size: 12px;
+        font-weight: 500;
+        color: #94a3b8;
+        letter-spacing: 0.01em;
+        transition: color 0.25s ease;
+        white-space: nowrap;
+      }
+      .back-btn:hover .lbl {
+        color: #c4b5fd;
+      }
+
+      /* trailing dot trail (decorative) */
+      .back-btn .trail {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-right: 2px;
+      }
+      .back-btn .trail span {
+        display: block;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #a78bfa;
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: right;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+      .back-btn:hover .trail span:nth-child(1) {
+        opacity: 0.6;
+        transform: scaleX(1);
+        transition-delay: 0s;
+      }
+      .back-btn:hover .trail span:nth-child(2) {
+        opacity: 0.35;
+        transform: scaleX(1);
+        transition-delay: 0.05s;
+      }
+      .back-btn:hover .trail span:nth-child(3) {
+        opacity: 0.15;
+        transform: scaleX(1);
+        transition-delay: 0.1s;
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen flex items-center justify-center px-4 relative overflow-hidden text-white"
+  >
+    <!-- Background Glow -->
+    <div
+      class="absolute w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-3xl top-[-120px] left-[-120px] animate-float"
+    ></div>
+    <div
+      class="absolute w-[350px] h-[350px] bg-purple-500/20 rounded-full blur-3xl bottom-[-100px] right-[-100px] animate-float"
+    ></div>
+
+    <!-- ══════════════════════════════
+         ANIMATED BACK BUTTON
+    ══════════════════════════════ -->
+    <a href="/" class="back-btn absolute top-5 left-5 z-20">
+      <div class="pill">
+        <!-- dot trail -->
+        <div class="trail"><span></span><span></span><span></span></div>
+        <!-- icon -->
+        <div class="icon-wrap">
+          <svg
+            class="arrow"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.8"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+            />
+          </svg>
+        </div>
+        <span class="lbl">Back to Home</span>
+      </div>
+    </a>
+
+    <!-- LOGIN CARD -->
+    <div
+      class="glass w-full max-w-md p-8 rounded-3xl shadow-2xl animate-fadeUp relative z-10"
+    >
+      <!-- Logo -->
+      <div class="flex items-center gap-3 mb-6">
+        <div
+          class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center animate-pulseGlow"
+        >
+          <span class="text-lg">✨</span>
+        </div>
+        <h2 class="font-display text-xl font-bold">
+          Mock<span class="gradient-text">AI</span>
+        </h2>
+      </div>
+
+      <!-- Title -->
+      <h1 class="text-3xl font-display font-bold mb-1">Welcome Back 👋</h1>
+      <p class="text-gray-400 text-sm mb-6">
+        Login to continue your AI interview journey
+      </p>
+
+      <!-- Form -->
+      <form class="space-y-5" onsubmit="return false;">
+        <!-- Email -->
+        <div>
+          <input
+            type="email"
+            placeholder="Email Address"
+            class="input w-full px-4 py-3 rounded-xl text-sm"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="relative">
+          <input
+            id="password"
+            type="password"
+            placeholder="Password"
+            class="input w-full px-4 py-3 rounded-xl text-sm"
+          />
+          <button
+            type="button"
+            onclick="togglePassword()"
+            class="absolute right-3 top-3 text-gray-400 hover:text-purple-400 transition"
+          >
+            👁
+          </button>
+        </div>
+
+        <!-- Options -->
+        <div class="flex justify-between text-xs text-gray-400">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" class="accent-purple-500" />
+            Remember me
+          </label>
+          <a href="#" class="hover:text-purple-400 transition"
+            >Forgot Password?</a
+          >
+        </div>
+
+        <!-- Submit -->
+        <button
+          class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 transition font-semibold shadow-lg shadow-indigo-500/30"
+        >
+          Login
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="flex items-center my-6">
+        <div class="flex-1 h-px bg-gray-700"></div>
+        <span class="px-3 text-xs text-gray-500">OR</span>
+        <div class="flex-1 h-px bg-gray-700"></div>
+      </div>
+
+      <!-- Social Login -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Google -->
+        <button
+          class="glass py-2.5 rounded-xl hover:bg-white/10 transition text-sm flex items-center justify-center gap-2.5 group"
+        >
+          <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
+          </svg>
+          <span class="text-gray-300 group-hover:text-white transition-colors"
+            >Google</span
+          >
+        </button>
+
+        <!-- GitHub -->
+        <button
+          class="glass py-2.5 rounded-xl hover:bg-white/10 transition text-sm flex items-center justify-center gap-2.5 group"
+        >
+          <svg
+            class="w-4 h-4 flex-shrink-0 text-white"
+            fill="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <span class="text-gray-300 group-hover:text-white transition-colors"
+            >GitHub</span
+          >
+        </button>
+      </div>
+
+      <!-- Bottom -->
+      <p class="text-center text-xs text-gray-500 mt-6">
+        Don't have an account?
+        <a href="{% url 'register' %}" class="text-purple-400 hover:underline">
+          Register
+        </a>
+      </p>
+    </div>
+
+    <script>
+      function togglePassword() {
+        const input = document.getElementById("password");
+        input.type = input.type === "password" ? "text" : "password";
+      }
+    </script>
+  </body>
+</html>

@@ -89,6 +89,7 @@
 
     .section-dark {
       background: rgba(0, 0, 0, 0.35);
+      -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
     }
 
@@ -133,6 +134,7 @@
     #navbar.scrolled {
       background: rgba(5, 6, 14, 0.85) !important;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+      -webkit-backdrop-filter: blur(20px);
       backdrop-filter: blur(20px);
     }
 
@@ -205,6 +207,7 @@
     /* ─── Glass card ─── */
     .glass {
       background: rgba(255, 255, 255, 0.04);
+      -webkit-backdrop-filter: blur(18px);
       backdrop-filter: blur(18px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
@@ -433,7 +436,7 @@
       </div>
 
       <!-- Hamburger -->
-      <button id="menu-btn"
+      <button title="menu-btn"
         class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors" onclick="
             document.getElementById('mobile-menu').classList.toggle('open')
           ">

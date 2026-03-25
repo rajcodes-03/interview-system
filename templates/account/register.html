@@ -194,6 +194,7 @@
       position: absolute; inset: 0;
       border-radius: 24px;
       background: rgba(10,10,24,.95);
+      -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
       z-index: 20;
       flex-direction: column;
@@ -214,6 +215,7 @@
       padding: 7px 14px 7px 10px; border-radius: 999px;
       border: 1px solid rgba(139,92,246,.18);
       background: rgba(255,255,255,.04);
+      -webkit-backdrop-filter: blur(14px);
       backdrop-filter: blur(14px);
       transition: all .3s cubic-bezier(.34,1.56,.64,1);
     }
@@ -228,7 +230,7 @@
       background: rgba(139,92,246,.15);
       display: flex; align-items: center; justify-content: center;
       transition: background .3s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
-    }
+    } 
     .back-btn:hover .back-icon { background: rgba(139,92,246,.35); transform: translateX(-3px); }
     .back-lbl { font-size: 11px; font-weight: 500; color: #94a3b8; transition: color .25s ease; white-space: nowrap; }
     .back-btn:hover .back-lbl { color: #c4b5fd; }

@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
 
-    <script>
+    <script> 
       tailwind.config = {
         theme: {
           extend: {
@@ -51,6 +51,7 @@
 
       .glass {
         background: rgba(255, 255, 255, 0.06);
+        -webkit-backdrop-filter: blur(25px);
         backdrop-filter: blur(25px);
         border: 1px solid rgba(255, 255, 255, 0.12);
       }
@@ -109,6 +110,7 @@
         border-radius: 999px;
         border: 1px solid rgba(139, 92, 246, 0.2);
         background: rgba(255, 255, 255, 0.04);
+        -webkit-backdrop-filter: blur(16px);
         backdrop-filter: blur(16px);
         transition:
           background 0.3s ease,
@@ -271,11 +273,12 @@
 
       <!-- Form -->
       <form class="space-y-5" onsubmit="return false;">
+        {% csrf_token %}
         <!-- Email -->
         <div>
           <input
             type="email"
-            placeholder="Email Address"
+            placeholder="Username or Email"
             class="input w-full px-4 py-3 rounded-xl text-sm"
           />
         </div>
@@ -309,9 +312,7 @@
         </div>
 
         <!-- Submit -->
-        <button
-          class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 transition font-semibold shadow-lg shadow-indigo-500/30"
-        >
+        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 transition font-semibold shadow-lg shadow-indigo-500/30">
           Login
         </button>
       </form>

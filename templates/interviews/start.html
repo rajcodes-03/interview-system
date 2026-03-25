@@ -1,0 +1,649 @@
+{% extends "base.html" %}
+{% block content %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Start Interview – MockAI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { display: ["Syne","sans-serif"], body: ["DM Sans","sans-serif"] },
+          animation: {
+            float:        "float 7s ease-in-out infinite",
+            "float-r":    "float 9s ease-in-out infinite reverse",
+            "pulse-slow": "pulse 4s ease-in-out infinite",
+            "fade-up":    "fadeUp .7s cubic-bezier(.22,1,.36,1) forwards",
+            "spin-slow":  "spin 18s linear infinite",
+          },
+          keyframes: {
+            float:  { "0%,100%": {transform:"translateY(0)"}, "50%": {transform:"translateY(-18px)"} },
+            fadeUp: { "0%": {opacity:0,transform:"translateY(24px)"}, "100%": {opacity:1,transform:"translateY(0)"} },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    *,*::before,*::after { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { font-family:"DM Sans",sans-serif; }
+
+    .mesh-bg {
+      background-color:#05060e;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 15% 10%, rgba(79,70,229,.24) 0%, transparent 55%),
+        radial-gradient(ellipse 65% 55% at 85% 85%, rgba(124,58,237,.2)  0%, transparent 55%),
+        radial-gradient(ellipse 50% 45% at 50% 50%, rgba(37,99,235,.07)  0%, transparent 60%);
+    }
+    .dot-grid {
+      background-image:radial-gradient(rgba(99,102,241,.14) 1px, transparent 1px);
+      background-size:28px 28px;
+    }
+    .g-text {
+      background:linear-gradient(135deg,#60a5fa 0%,#a78bfa 52%,#c084fc 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .glass {
+      background:rgba(255,255,255,.04);
+      backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .btn-primary {
+      background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);
+      box-shadow:0 4px 22px rgba(79,70,229,.38);
+      transition:filter .3s ease, transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+    }
+    .btn-primary:hover  { filter:brightness(1.12); transform:translateY(-2px); box-shadow:0 8px 32px rgba(79,70,229,.54); }
+    .btn-primary:active { transform:scale(.97); }
+
+    /* ── Custom select / input styling ── */
+    .form-input, .form-select {
+      width:100%;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:14px 18px;
+      color:#e2e8f0;
+      font-family:"DM Sans",sans-serif;
+      font-size:14px;
+      transition:border-color .25s ease, background .25s ease, box-shadow .25s ease;
+      outline:none;
+      -webkit-appearance:none; appearance:none;
+    }
+    .form-input::placeholder { color:rgba(148,163,184,.45); }
+    .form-input:focus, .form-select:focus {
+      border-color:rgba(99,102,241,.55);
+      background:rgba(99,102,241,.06);
+      box-shadow:0 0 0 3px rgba(99,102,241,.12);
+    }
+    .form-select option { background:#0d0e1f; color:#e2e8f0; }
+
+    /* ── Select arrow ── */
+    .select-wrap { position:relative; }
+    .select-wrap::after {
+      content:"";
+      position:absolute; right:16px; top:50%; transform:translateY(-50%);
+      width:10px; height:10px; pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a78bfa' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+      background-size:contain; background-repeat:no-repeat;
+    }
+
+    /* ── Option cards ── */
+    .opt-card {
+      cursor:pointer;
+      border:1.5px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      padding:14px 16px;
+      transition:all .25s ease;
+      display:flex; align-items:center; gap:10px;
+    }
+    .opt-card:hover { background:rgba(99,102,241,.07); border-color:rgba(99,102,241,.3); }
+    .opt-card.active { background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.55); box-shadow:0 0 0 2px rgba(99,102,241,.18); }
+    .opt-card input[type="radio"] { display:none; }
+    .opt-dot {
+      width:18px; height:18px; border-radius:50%;
+      border:2px solid rgba(99,102,241,.35);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:all .2s ease;
+    }
+    .opt-card.active .opt-dot { border-color:#7c3aed; background:#7c3aed; }
+    .opt-dot-inner { width:6px; height:6px; border-radius:50%; background:#fff; opacity:0; transition:opacity .2s; }
+    .opt-card.active .opt-dot-inner { opacity:1; }
+
+    /* ── Progress steps ── */
+    .step-pill {
+      display:flex; align-items:center; gap:6px;
+      padding:5px 12px 5px 5px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      font-size:12px; color:rgba(148,163,184,.7);
+    }
+    .step-pill .num {
+      width:22px; height:22px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:700;
+    }
+    .step-pill.done .num { background:#4f46e5; color:#fff; }
+    .step-pill.active .num { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:#fff; }
+    .step-pill.done { border-color:rgba(79,70,229,.3); }
+    .step-pill.active { border-color:rgba(99,102,241,.4); color:#a5b4fc; }
+    .step-connector { width:24px; height:1px; background:rgba(255,255,255,.1); }
+
+    /* ── Section tag ── */
+    .section-tag {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 12px; border-radius:999px;
+      background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.2);
+      font-size:11px; font-weight:600; letter-spacing:.06em;
+      text-transform:uppercase; color:#a5b4fc;
+    }
+
+    /* ── Reveal ── */
+    .reveal { opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1); }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* ── Floating tag ── */
+    .float-tag {
+        -webkit-backdrop-filter: blur(12px);
+      position:absolute; backdrop-filter:blur(12px);
+      border-radius:12px; padding:8px 12px;
+      font-size:11px; font-weight:500;
+      border:1px solid rgba(255,255,255,.1);
+      background:rgba(10,10,30,.7);
+      pointer-events:none;
+    }
+
+    /* ── Progress bar fill animation ── */
+    @keyframes fillBar {
+      from { width:0 }
+      to   { width:var(--w) }
+    }
+    .bar-fill { animation:fillBar 1.2s cubic-bezier(.22,1,.36,1) .3s forwards; width:0; }
+
+    /* ── Textarea ── */
+    .form-textarea {
+      width:100%; min-height:90px; resize:vertical;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px; padding:14px 18px;
+      color:#e2e8f0; font-family:"DM Sans",sans-serif; font-size:14px;
+      transition:border-color .25s ease, background .25s ease, box-shadow .25s ease;
+      outline:none;
+    }
+    .form-textarea::placeholder { color:rgba(148,163,184,.45); }
+    .form-textarea:focus {
+      border-color:rgba(99,102,241,.55);
+      background:rgba(99,102,241,.06);
+      box-shadow:0 0 0 3px rgba(99,102,241,.12);
+    }
+
+    /* ── Navbar ── */
+    #navbar { transition:background .3s ease, box-shadow .3s ease; }
+    #navbar.scrolled { background:rgba(5,6,14,.85)!important; box-shadow:0 4px 30px rgba(0,0,0,.4);-webkit-backdrop-filter: blur(20px); backdrop-filter:blur(20px); }
+    .nav-link { position:relative; font-size:.875rem; color:rgba(203,213,225,.75); transition:color .2s ease; }
+    .nav-link::after { content:""; position:absolute; bottom:-3px; left:0; width:0; height:1.5px; background:linear-gradient(90deg,#6366f1,#9333ea); transition:width .3s ease; }
+    .nav-link:hover { color:#fff; }
+    .nav-link:hover::after { width:100%; }
+  </style>
+</head>
+
+<body class="mesh-bg text-white min-h-screen overflow-x-hidden">
+  <div class="fixed inset-0 dot-grid opacity-30 pointer-events-none z-0"></div>
+
+  <!-- Ambient orbs -->
+  <div class="fixed top-[-100px] left-[-100px] w-96 h-96 rounded-full bg-indigo-600/10 blur-3xl pointer-events-none animate-float z-0"></div>
+  <div class="fixed bottom-[-80px] right-[-80px] w-80 h-80 rounded-full bg-purple-600/10 blur-3xl pointer-events-none animate-float-r z-0"></div>
+
+  <!-- ── Navbar ── -->
+  <header id="navbar" class="fixed top-0 left-0 right-0 z-50 border-b border-white/6 backdrop-blur-xl bg-black/10">
+    <div class="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group flex-shrink-0">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-purple-500/40 transition-all">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          </svg>
+        </div>
+        <span class="font-display font-800 text-lg tracking-tight">Mock<span class="g-text">AI</span></span>
+      </a>
+      <nav class="hidden md:flex items-center gap-7">
+        <a href="/" class="nav-link">Home</a>
+        <a href="/#features" class="nav-link">Features</a>
+        <a href="/#how-it-works" class="nav-link">How It Works</a>
+        <a href="{% url 'profile' %}" class="nav-link">Profile</a>
+      </nav>
+      <div class="hidden md:flex items-center gap-3">
+        <a href="{% url 'login' %}" class="text-sm font-medium text-gray-300 px-4 py-2 rounded-lg hover:text-white transition-colors">Login</a>
+        <a href="{% url 'register' %}" class="btn-primary text-sm font-semibold text-white px-4 py-2 rounded-lg">Register</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════ -->
+  <main class="relative z-10 min-h-screen flex items-center justify-center pt-28 pb-20 px-5 sm:px-8">
+    <div class="w-full max-w-5xl mx-auto">
+
+      <!-- Top label -->
+      <div class="text-center mb-10 animate-fade-up">
+        <div class="section-tag mx-auto w-fit mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse-slow"></span>
+          New Session
+        </div>
+        <h1 class="font-display text-4xl sm:text-5xl font-800 leading-tight tracking-tight mb-3">
+          Set up your <span class="g-text">interview</span>
+        </h1>
+        <p class="text-gray-400 text-base max-w-md mx-auto leading-relaxed">
+          Customize your session and let our AI prepare the perfect questions for your target role.
+        </p>
+      </div>
+
+      <!-- Progress pills -->
+      <div class="flex items-center justify-center gap-2 mb-10 reveal" style="transition-delay:.1s">
+        <div class="step-pill active">
+          <span class="num">1</span> Configure
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-pill">
+          <span class="num" style="background:rgba(255,255,255,.08);color:#64748b">2</span> Interview
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-pill">
+          <span class="num" style="background:rgba(255,255,255,.08);color:#64748b">3</span> Results
+        </div>
+      </div>
+
+      <!-- Grid layout -->
+      <div class="grid lg:grid-cols-5 gap-6 items-start">
+
+        <!-- ── LEFT: Form ── -->
+        <div class="lg:col-span-3 reveal" style="transition-delay:.15s">
+          <div class="glass rounded-3xl p-7 sm:p-9 border-indigo-500/10 shadow-2xl shadow-indigo-900/30">
+            <form method="POST" action="{% url 'start_interview' %}" id="interview-form">
+              {% csrf_token %}
+
+              <!-- ─ Job Role ─ -->
+              <div class="mb-7">
+                <label class="block text-sm font-semibold text-white mb-2">
+                  Job Role
+                  <span class="text-indigo-400 ml-0.5">*</span>
+                </label>
+                <p class="text-xs text-gray-500 mb-3">Enter the position you're preparing for</p>
+                <div class="relative">
+                  <input
+                    type="text"
+                    name="job_role"
+                    id="job_role"
+                    class="form-input pl-11"
+                    placeholder="e.g. Frontend Developer, Data Scientist, Product Manager…"
+                    required
+                    autocomplete="off"
+                  />
+                  <span class="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400 pointer-events-none">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                  </span>
+                </div>
+                <!-- Quick picks -->
+                <div class="flex flex-wrap gap-2 mt-3" id="quick-picks">
+                  <button type="button" class="quick-pill" data-val="Frontend Developer">Frontend Dev</button>
+                  <button type="button" class="quick-pill" data-val="Backend Engineer">Backend Eng</button>
+                  <button type="button" class="quick-pill" data-val="Full Stack Developer">Full Stack</button>
+                  <button type="button" class="quick-pill" data-val="Data Scientist">Data Scientist</button>
+                  <button type="button" class="quick-pill" data-val="Product Manager">Product Manager</button>
+                  <button type="button" class="quick-pill" data-val="DevOps Engineer">DevOps</button>
+                </div>
+              </div>
+
+              <div class="h-px bg-white/5 mb-7"></div>
+
+              <!-- ─ Category ─ -->
+              <div class="mb-7">
+                <label class="block text-sm font-semibold text-white mb-1">
+                  Interview Category
+                  <span class="text-indigo-400 ml-0.5">*</span>
+                </label>
+                <p class="text-xs text-gray-500 mb-4">Choose the type of interview you want to practice</p>
+                <input type="hidden" name="category" id="category-val" required/>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="category-group">
+
+                  <label class="opt-card" data-group="category" data-val="tech">
+                    <input type="radio" name="_category" value="tech"/>
+                    <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="opt-dot"><div class="opt-dot-inner"></div></div>
+                    </div>
+                    <div class="flex-none text-right" style="margin-left:auto">
+                      <p class="text-sm font-semibold text-white">Technical</p>
+                      <p class="text-[11px] text-gray-500 mt-0.5">Coding & DSA</p>
+                    </div>
+                  </label>
+
+                  <label class="opt-card" data-group="category" data-val="hr">
+                    <input type="radio" name="_category" value="hr"/>
+                    <div class="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-none text-right" style="margin-left:auto">
+                      <p class="text-sm font-semibold text-white">HR Round</p>
+                      <p class="text-[11px] text-gray-500 mt-0.5">Soft skills</p>
+                    </div>
+                  </label>
+
+                  <label class="opt-card" data-group="category" data-val="behavioral">
+                    <input type="radio" name="_category" value="behavioral"/>
+                    <div class="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-none text-right" style="margin-left:auto">
+                      <p class="text-sm font-semibold text-white">Behavioral</p>
+                      <p class="text-[11px] text-gray-500 mt-0.5">Situational</p>
+                    </div>
+                  </label>
+
+                </div>
+              </div>
+
+              <div class="h-px bg-white/5 mb-7"></div>
+
+              <!-- ─ Difficulty ─ -->
+              <div class="mb-8">
+                <label class="block text-sm font-semibold text-white mb-1">
+                  Difficulty Level
+                  <span class="text-indigo-400 ml-0.5">*</span>
+                </label>
+                <p class="text-xs text-gray-500 mb-4">How challenging should the questions be?</p>
+                <input type="hidden" name="difficulty" id="difficulty-val" required/>
+                <div class="grid grid-cols-3 gap-3" id="difficulty-group">
+
+                  <label class="opt-card flex-col text-center gap-2 py-5" data-group="difficulty" data-val="easy">
+                    <input type="radio" name="_difficulty" value="easy"/>
+                    <span class="text-xl">🌱</span>
+                    <div>
+                      <p class="text-sm font-semibold text-white">Easy</p>
+                      <p class="text-[10px] text-gray-500 mt-0.5">Entry level</p>
+                    </div>
+                    <div class="opt-dot mx-auto"><div class="opt-dot-inner"></div></div>
+                  </label>
+
+                  <label class="opt-card flex-col text-center gap-2 py-5 active" data-group="difficulty" data-val="medium">
+                    <input type="radio" name="_difficulty" value="medium" checked/>
+                    <span class="text-xl">⚡</span>
+                    <div>
+                      <p class="text-sm font-semibold text-white">Medium</p>
+                      <p class="text-[10px] text-gray-500 mt-0.5">Mid-level</p>
+                    </div>
+                    <div class="opt-dot mx-auto"><div class="opt-dot-inner"></div></div>
+                  </label>
+
+                  <label class="opt-card flex-col text-center gap-2 py-5" data-group="difficulty" data-val="hard">
+                    <input type="radio" name="_difficulty" value="hard"/>
+                    <span class="text-xl">🔥</span>
+                    <div>
+                      <p class="text-sm font-semibold text-white">Hard</p>
+                      <p class="text-[10px] text-gray-500 mt-0.5">Senior / FAANG</p>
+                    </div>
+                    <div class="opt-dot mx-auto"><div class="opt-dot-inner"></div></div>
+                  </label>
+
+                </div>
+              </div>
+
+              <!-- ─ Submit ─ -->
+              <button type="submit" id="submit-btn"
+                class="btn-primary w-full flex items-center justify-center gap-3 text-white font-semibold px-6 py-4 rounded-xl text-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/>
+                </svg>
+                <span id="btn-label">Generate Questions & Start</span>
+                <!-- Spinner (hidden) -->
+                <svg id="btn-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+              </button>
+
+              <p class="text-center text-xs text-gray-600 mt-4">
+                AI will generate 5 tailored questions based on your settings
+              </p>
+            </form>
+          </div>
+        </div>
+
+        <!-- ── RIGHT: Preview card ── -->
+        <div class="lg:col-span-2 space-y-5 reveal" style="transition-delay:.25s">
+
+          <!-- Session preview -->
+          <div class="glass rounded-2xl p-6 border-white/6">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Session Preview</p>
+
+            <div class="space-y-3" id="preview-list">
+              <!-- Role -->
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[11px] text-gray-500">Job Role</p>
+                  <p class="text-sm font-medium text-white truncate" id="prev-role">—</p>
+                </div>
+              </div>
+
+              <!-- Category -->
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-violet-500/15 border border-violet-500/15 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-[11px] text-gray-500">Category</p>
+                  <p class="text-sm font-medium text-white" id="prev-cat">—</p>
+                </div>
+              </div>
+
+              <!-- Difficulty -->
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-[11px] text-gray-500">Difficulty</p>
+                  <p class="text-sm font-medium text-white" id="prev-diff">Medium ⚡</p>
+                </div>
+              </div>
+
+              <!-- Questions count -->
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-[11px] text-gray-500">Questions</p>
+                  <p class="text-sm font-medium text-white">5 AI-generated</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Est. time -->
+            <div class="mt-5 pt-4 border-t border-white/6 flex items-center justify-between">
+              <span class="text-xs text-gray-500">Est. duration</span>
+              <span class="text-xs font-semibold text-indigo-300">~15–20 min</span>
+            </div>
+          </div>
+
+          <!-- Tips card -->
+          <div class="glass rounded-2xl p-6 border-white/6">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-6 h-6 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18"/>
+                </svg>
+              </div>
+              <p class="text-xs font-semibold text-amber-300">Pro Tips</p>
+            </div>
+            <ul class="space-y-2.5">
+              <li class="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                <span class="text-indigo-400 mt-0.5 flex-shrink-0">✦</span>
+                Use the STAR method for behavioral questions
+              </li>
+              <li class="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                <span class="text-indigo-400 mt-0.5 flex-shrink-0">✦</span>
+                Be specific — use numbers and real examples
+              </li>
+              <li class="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                <span class="text-indigo-400 mt-0.5 flex-shrink-0">✦</span>
+                Think out loud; interviewers value your reasoning
+              </li>
+              <li class="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                <span class="text-indigo-400 mt-0.5 flex-shrink-0">✦</span>
+                Take 5–10 s to think before answering
+              </li>
+            </ul>
+          </div>
+
+          <!-- Stat badges -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="glass rounded-xl p-4 text-center border-white/5">
+              <p class="font-display font-800 text-2xl" style="background:linear-gradient(135deg,#a5b4fc,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">98%</p>
+              <p class="text-[11px] text-gray-500 mt-0.5">Satisfaction</p>
+            </div>
+            <div class="glass rounded-xl p-4 text-center border-white/5">
+              <p class="font-display font-800 text-2xl" style="background:linear-gradient(135deg,#a5b4fc,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">14K+</p>
+              <p class="text-[11px] text-gray-500 mt-0.5">Sessions done</p>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /grid -->
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/6 px-5 sm:px-8 py-6 relative z-10">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <div class="w-5 h-5 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <svg class="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          </svg>
+        </div>
+        <span class="font-display font-700 text-xs text-white">Mock<span class="g-text">AI</span></span>
+        <span class="text-gray-600 text-xs ml-1">© 2026</span>
+      </div>
+      <p class="text-xs text-gray-600">Powered by AI · Designed for success</p>
+    </div>
+  </footer>
+
+  <!-- ─────────────────────────────────────
+       STYLES for quick pills (injected here
+       so Tailwind JIT picks them up)
+  ───────────────────────────────────── -->
+  <style>
+    .quick-pill {
+      display:inline-flex; align-items:center;
+      padding:4px 11px; border-radius:999px;
+      border:1px solid rgba(99,102,241,.22);
+      background:rgba(99,102,241,.07);
+      color:rgba(165,180,252,.85);
+      font-size:11px; font-weight:500;
+      cursor:pointer; transition:all .2s ease;
+    }
+    .quick-pill:hover {
+      background:rgba(99,102,241,.18);
+      border-color:rgba(99,102,241,.5);
+      color:#c4b5fd;
+      transform:translateY(-1px);
+    }
+    .quick-pill.used { border-color:rgba(99,102,241,.55); background:rgba(99,102,241,.18); color:#a5b4fc; }
+  </style>
+
+  <script>
+    /* ── Navbar scroll ── */
+    const nb = document.getElementById('navbar');
+    window.addEventListener('scroll', () => nb.classList.toggle('scrolled', scrollY > 50));
+
+    /* ── Reveal on scroll ── */
+    const ro = new IntersectionObserver(entries =>
+      entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); }), { threshold:.1 });
+    document.querySelectorAll('.reveal').forEach(el => ro.observe(el));
+
+    /* ── Option card selection ── */
+    const catLabels  = { tech:'Technical 💻', hr:'HR Round 👥', behavioral:'Behavioral ⚡' };
+    const diffLabels = { easy:'Easy 🌱', medium:'Medium ⚡', hard:'Hard 🔥' };
+
+    document.querySelectorAll('.opt-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const group = card.dataset.group;
+        const val   = card.dataset.val;
+        // deselect siblings
+        document.querySelectorAll(`.opt-card[data-group="${group}"]`)
+          .forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        // sync hidden input
+        if (group === 'category') {
+          document.getElementById('category-val').value = val;
+          document.getElementById('prev-cat').textContent = catLabels[val] || val;
+        } else {
+          document.getElementById('difficulty-val').value = val;
+          document.getElementById('prev-diff').textContent = diffLabels[val] || val;
+        }
+      });
+    });
+
+    /* Default difficulty = medium */
+    document.getElementById('difficulty-val').value = 'medium';
+
+    /* ── Job role → preview ── */
+    const roleInput = document.getElementById('job_role');
+    roleInput.addEventListener('input', () => {
+      const v = roleInput.value.trim();
+      document.getElementById('prev-role').textContent = v || '—';
+    });
+
+    /* ── Quick pick pills ── */
+    document.querySelectorAll('.quick-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.val;
+        roleInput.value = v;
+        document.getElementById('prev-role').textContent = v;
+        document.querySelectorAll('.quick-pill').forEach(p => p.classList.remove('used'));
+        btn.classList.add('used');
+      });
+    });
+
+    /* ── Form submit: spinner ── */
+    document.getElementById('interview-form').addEventListener('submit', function(e) {
+      const cat  = document.getElementById('category-val').value;
+      const diff = document.getElementById('difficulty-val').value;
+      const role = document.getElementById('job_role').value.trim();
+      if (!cat || !diff || !role) { e.preventDefault(); alert('Please fill in all fields.'); return; }
+      document.getElementById('btn-label').textContent  = 'Generating questions…';
+      document.getElementById('btn-spinner').classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
+{% endblock %}
